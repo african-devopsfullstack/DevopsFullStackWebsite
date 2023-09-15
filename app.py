@@ -21,6 +21,9 @@ config = {
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
+app.config['FLASK_ENV'] = 'development'
+app.config['DEBUG'] = True
+app.config['FLASK_APP'] = 'app.py'
 CORS(app, origins="*")
 conn = connect(**config)
 cursor = conn.cursor()

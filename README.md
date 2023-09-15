@@ -55,3 +55,13 @@ DB_USER=
 DB_PASSWORD=
 ```
 Request the database connection details
+
+Step 5: Run the Application
+you can run the application using the following command:
+
+    python app.py
+
+or
+
+    flask run
+
