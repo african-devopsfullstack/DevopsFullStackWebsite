@@ -1,4 +1,7 @@
 # DevopsFullStackWebsite
+![Auto Assign](https://github.com/african-devopsfullstack/demo-repository/actions/workflows/auto-assign.yml/badge.svg)
+
+![Proof HTML](https://github.com/african-devopsfullstack/demo-repository/actions/workflows/proof-html.yml/badge.svg)
 
 This guide will walk you through the process of setting up and running a Flask web application, including creating a .env file for configuring database connections.
 Prerequisites
