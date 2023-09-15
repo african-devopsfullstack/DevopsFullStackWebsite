@@ -1,1 +1,57 @@
 # DevopsFullStackWebsite
+
+This guide will walk you through the process of setting up and running a Flask web application, including creating a .env file for configuring database connections.
+Prerequisites
+
+Before you begin, make sure you have the following prerequisites installed on your system:
+
+    Python 3.x
+    pip (Python package manager)
+
+Step 1: Clone the Repository
+
+First, clone the Flask application repository to your local machine using the following command:
+
+    git clone <repository-url>
+    cd <repository-directory>
+
+Step 2: Create a Virtual Environment (Optional but recommended)
+
+It's a good practice to create a virtual environment for your Flask application to isolate its dependencies. To create a virtual environment, use the following commands:
+
+
+
+    python -m venv venv
+
+Activate the virtual environment:
+
+On Windows:
+
+
+    venv\Scripts\activate
+
+On macOS and Linux:
+
+    source venv/bin/activate
+
+Step 3: Install Dependencies
+
+Install the required Python packages using pip:
+
+
+    pip install -r requirements.txt
+
+Step 4: Create a .env File
+
+To configure your Flask application's database connection, you'll need to create a .env file in the root directory of your project. This file should contain sensitive information like database credentials and should never be committed to version control. Below is an example .env file structure:
+
+# .env
+```
+# Database configuration
+DB_HOST=
+DB_PORT=3306
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+```
+Request the database connection details
