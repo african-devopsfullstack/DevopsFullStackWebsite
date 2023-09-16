@@ -207,7 +207,7 @@ def games():
 def groups():
     return render_template('groups.html')
 
-@app.route('/jobs')
+@app.route('/jobs', methods=['GET', 'POST'])
 def jobs():
     return render_template('jobs.html')
 

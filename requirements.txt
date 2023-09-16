@@ -5,3 +5,5 @@ wtforms
 flask_wtf
 passlib
 mysql-connector-python
+requests
+httpx
