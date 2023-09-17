@@ -7,3 +7,4 @@ passlib
 mysql-connector-python
 requests
 httpx
+flask-socketio
