@@ -68,3 +68,5 @@ or
 
     flask run
 
+# Deployment
+Create a new branch from master and create a PR for dev. Once it has been accepted and merge, create another PR to push dev to main. *PLS* Do not push directly to the main branch
