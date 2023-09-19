@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask_socketio import SocketIO, emit, join_room, leave_room
 from mysql.connector import connect, Error
 from flask_cors import CORS
 from functools import wraps
@@ -9,25 +10,36 @@ import secrets
 import database
 from dotenv import load_dotenv
 import os
+import datetime
 
 load_dotenv()
 
-
-config = {
-    'user': os.getenv('DB_USER'),
-    'password': os.getenv('DB_PASSWORD'),
-    'host': os.getenv('DB_HOST'),
-    'database': os.getenv('DB_NAME')
-}
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 app.config['FLASK_ENV'] = 'development'
 app.config['DEBUG'] = True
 app.config['FLASK_APP'] = 'app.py'
+socketio = SocketIO(app)
 CORS(app, origins="*")
-conn = connect(**config)
-cursor = conn.cursor()
+
+online_users = set()
+num_of_online_users = len(online_users)
+
+try:
+    config = {
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'host': os.getenv('DB_HOST'),
+    'database': os.getenv('DB_NAME')
+}
+
+    conn = connect(**config)
+    cursor = conn.cursor()
+    print("Opened database successfully")
+except Error as e:
+    print(e)
+    pass
 
 class GenderForm(FlaskForm):
     gender = SelectField('Gender', choices=['Male', 'Female', 'Other'])
@@ -44,6 +56,7 @@ def login_required(f):
             flash("You need to login first")
             return redirect(url_for('landing'))
     return wrap
+
 
 
 @login_required
@@ -121,6 +134,19 @@ def register():
         print(e)
         pass
     return render_template('landing.html', gender_choice=gender_choice, selected_option=selected_option, gender_form=gender_form)
+
+@app.route('/post', methods=['GET', 'POST'])
+@login_required
+def post():
+    if request.method == 'POST':
+        post = request.form['post']
+        created_at = datetime.datetime.now()
+        user_id = session['user_id']
+        print(post, created_at, user_id)
+        query = "INSERT into posts (user_id, post_content, created_at) VALUES (%s, %s, %s)" 
+        cursor.execute(query, (user_id, post, created_at))
+        conn.commit()
+    return redirect(url_for('feed'))
 
 @app.route('/logout')
 def logout():
@@ -211,7 +237,15 @@ def feedlayout2():
 @login_required
 def feed():
     user = session['current_user']
-    return render_template('feed.html', user=user)
+    posts = database.get_all_posts()
+    
+    # for post in posts:
+    #     print(post)
+    all_users_except_current_user = database.get_all_users(session['user_id'])
+    if all_users_except_current_user is None:
+        all_users_except_current_user = []
+
+    return render_template('feed.html', user=user, online_users=list(online_users), num_of_online_users=num_of_online_users, posts=posts, all_users_except_current_user=all_users_except_current_user)
 
 @app.route('/form-login')
 @login_required
@@ -275,7 +309,60 @@ def pagesetting():
     firstname = user.split()[0]
     lastname = user.split()[1]
     email = session['email']
-    return render_template('pages-setting.html', user=user, firstname=firstname, lastname=lastname, email=email)
+    query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website  FROM users WHERE email=%s"
+    cursor.execute(query, (email,))
+    result = cursor.fetchone()
+    linkedin_profile = result[0]
+    github_profile = result[1]
+    about_user = result[2]
+    user_location = result[3]
+    working_at = result[4]
+    job_title = result[5]
+    experience = result[6]
+    resume = result[7]
+    website = result[8]
+    print(linkedin_profile, github_profile, about_user, user_location, working_at)
+    return render_template('pages-setting.html', user=user, firstname=firstname, lastname=lastname, 
+                           email=email, online_users=list(online_users), 
+                           num_of_online_users=num_of_online_users,
+                           linkedin_profile=linkedin_profile, github_profile=github_profile,
+                           about_user=about_user, user_location=user_location, working_at=working_at,
+                           job_title=job_title, experience=experience, resume=resume, website=website)
+
+@app.route('/save_user_settings', methods=['GET', 'POST'])
+@login_required
+def save_user_settings():
+    if request.method == 'POST':
+        user = session['current_user']
+        fname = request.form['fname']
+        lname = request.form['lname']
+        email = request.form['email']
+        linkedin_profile = request.form['linkedin_profile']
+        github_profile = request.form['github_profile']
+        about_user = request.form['about']
+        user_location = request.form['location']
+        working_at = request.form['working_at']
+        job_title = request.form['job_title']
+        experience = request.form['experience']
+        resume = request.form['resume']
+        website = request.form['website']
+
+        print(fname, lname, email ,linkedin_profile, github_profile, about_user, user_location, working_at)
+        try:
+            query = f"""UPDATE users SET fname='{fname}', lname='{lname}', email='{email}',
+            linkedin_profile='{linkedin_profile}', github_profile='{github_profile}', about_user='{about_user}',
+                user_location='{user_location}', working_at='{working_at}', job_title='{job_title}', experience='{experience}',
+                resume_url='{resume}', website='{website}'
+                  WHERE fname='{user.split()[0]}' AND lname='{user.split()[1]}'"""
+            cursor.execute(query)
+            conn.commit()
+            session['current_user'] = f"{fname} {lname}"
+            session['email'] = email
+            return redirect(url_for('pagesetting'))
+        except Error as e:
+            print(e)
+            pass
+    return redirect(url_for('pagesetting'))
 
 @app.route('/page-setting2')
 @login_required
@@ -306,7 +393,25 @@ def productsingle():
 @login_required
 def timeline():
     user = session['current_user']
-    return render_template('timeline.html', user=user)
+    email = session['email']
+    posts = database.get_all_posts()
+    query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website, about_user FROM users WHERE email=%s"
+    cursor.execute(query, (email,))
+    result = cursor.fetchone()
+    linkedin_profile = result[0]
+    github_profile = result[1]
+    about_user = result[2]
+    user_location = result[3]
+    working_at = result[4]
+    job_title = result[5]
+    experience = result[6]
+    resume = result[7]
+    website = result[8]
+    about_user = result[9]
+    
+    return render_template('timeline.html', user=user, online_users=list(online_users), num_of_online_users=num_of_online_users, posts=posts,
+                           linkedin_profile=linkedin_profile, github_profile=github_profile, user_location=user_location, working_at=working_at,
+                           job_title=job_title, experience=experience, resume=resume, website=website, about_user=about_user)
 
 @app.route('/timeline-event')
 @login_required
@@ -338,7 +443,20 @@ def videos():
 def videowatch():
     return render_template('video-watch.html')
 
+@socketio.on('connect')
+def handle_connect():
+    user_id = session['user_id']
+    if user_id:
+        print(user_id)
+        online_users.add(user_id)
+    emit('online_users', list(online_users), broadcast=True)
 
+@socketio.on('disconnect')
+def handle_disconnect():
+    user_id = session['user_id']
+    if user_id:
+        online_users.discard(user_id)
+    emit('online_users', list(online_users), broadcast=True)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)

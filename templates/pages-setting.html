@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Favicon -->
-    <link href="{{ url_for('static', filename='assets/images/favicon.png') }}" rel="icon" type="image/png">
+    <link href="{{ url_for('static', filename='assets/images/logo.png') }}" rel="icon" type="image/png">
 
     <!-- Basic Page Needs
         ================================================== -->
     <title>DevOps FullStack</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Socialite is - Professional A unique and beautiful collection of UI elements">
+    <meta name="description" content="Welcome to our DevOps Fullstack website, where we bridge the gap between development and operations to empower you with the knowledge, tools, and skills needed to excel in modern software engineering.">
 
     <!-- icons
     ================================================== -->
@@ -49,6 +49,7 @@
                                 <img src="{{ url_for('static', filename='assets/images/logo-mobile.png') }}" class="logo_mobile" alt="">
                             </a>
                         </div>
+                        <h1 style="font-size: larger; font-weight: bold; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; border-radius: 20px;">DevOps FullStack</h1>
                     </div>
                      
                   <!-- search icon for mobile -->
@@ -760,47 +761,74 @@
                     </div>
                     <div class="bg-white rounded-md lg:shadow-md shadow col-span-2 lg:mx-16">
         
-                        <div class="grid grid-cols-2 gap-3 lg:p-6 p-4">
-                            <div>
-                                <label for=""> First name</label>
-                                <input type="text" placeholder="" class="shadow-none with-border" value="{{ firstname }}">
+                        <form action="{{ url_for('save_user_settings')}}" method="post">
+                            <div class="grid grid-cols-2 gap-3 lg:p-6 p-4">
+                                <div>
+                                    <label for=""> First name</label>
+                                    <input type="text" placeholder="" id="fname" name="fname" class="shadow-none with-border" value="{{ firstname }}">
+                                </div>
+                                <div>
+                                    <label for=""> Last name</label>
+                                    <input type="text" placeholder="" id="lname" name="lname" class="shadow-none with-border" value="{{ lastname}}">
+                                 </div>
+                                 <div class="col-span-2">
+                                     <label for=""> Email</label>
+                                     <input type="text" placeholder="" id="email" name="email" class="shadow-none with-border" value="{{ email }}">
+                                 </div>
+                                 <div class="col-span-2">
+                                     <label for=""> Job</label>
+                                     <input type="text" placeholder="" id="job_title" name="job_title" class="shadow-none with-border" value="{{ job_title }}">
+                                </div>
+                                <div class="col-span-2">
+                                    <label for=""> Experience</label>
+                                    <input type="text" placeholder="" id="experience" name="experience" class="shadow-none with-border" value="{{ experience }}">
+                                </div>
+                                <div class="col-span-2">
+                                    <label for=""> Resume Link</label>
+                                    <input type="text" placeholder="" id="resume" name="resume" class="shadow-none with-border" value="{{ resume }}">
+                                </div>
+                                <div class="col-span-2">
+                                    <label for=""> Website</label>
+                                    <input type="text" placeholder="" id="website" name="website" class="shadow-none with-border" value="{{ website }}">
+                                </div>
+                                 <div class="col-span-2">
+                                    <label for=""> LinkedIn URL</label>
+                                    <input type="text" placeholder="" id="linkedin_profile" name="linkedin_profile" class="shadow-none with-border" value="{{ linkedin_profile }}">
+                                </div>
+                                <div class="col-span-2">
+                                    <label for=""> GitHub URL</label>
+                                    <input type="text" placeholder="" id="github_profile" name="github_profile" class="shadow-none with-border" value="{{ github_profile }}">
+                                </div>
+                                 <div class="col-span-2">
+                                     <label for="about">About me</label>  
+                                     <textarea id="about" name="about" rows="3"  class="with-border">{{ about_user }}</textarea>
+                                 </div> 
+                                 <div class="col-span-2">
+                                     <label for=""> Location</label>
+                                     <input type="text" placeholder="" id="location" name="location" class="shadow-none with-border" value="{{ user_location }}">
+                                 </div>
+                                 <div>
+                                    <label for=""> Working at</label>
+                                    <input type="text" placeholder="" id="working_at" name="working_at" class="shadow-none with-border" value="{{ working_at }}">
+                                 </div> 
+                                 <!-- <div>
+                                    <label for=""> Relationship </label>
+                                    <select id="relationship" name="relationship"  class="shadow-none selectpicker with-border ">
+                                     <option value="0">None</option>
+                                     <option value="1">Single</option>
+                                     <option value="2">In a relationship</option>
+                                     <option value="3">Married</option>
+                                     <option value="4">Engaged</option>
+                                   </select>
+                                 </div> -->
+                            </div> 
+                            <div class="bg-gray-10 p-6 pt-0 flex justify-end space-x-3">
+                                <button class="p-2 px-4 rounded bg-gray-50 text-red-500"> Cancel </button>
+                                <button type="submit" class="button bg-blue-700"> Save </button>
                             </div>
-                            <div>
-                                <label for=""> Last name</label>
-                                <input type="text" placeholder="" class="shadow-none with-border" value="{{ lastname}}">
-                             </div>
-                             <div class="col-span-2">
-                                 <label for=""> Email</label>
-                                 <input type="text" placeholder="" class="shadow-none with-border" value="{{ email }}">
-                             </div>
-                             <div class="col-span-2">
-                                 <label for="about">About me</label>  
-                                 <textarea id="about" name="about" rows="3"  class="with-border"></textarea>
-                             </div> 
-                             <div class="col-span-2">
-                                 <label for=""> Location</label>
-                                 <input type="text" placeholder="" class="shadow-none with-border">
-                             </div>
-                             <div>
-                                <label for=""> Working at</label>
-                                <input type="text" placeholder="" class="shadow-none with-border">
-                             </div> 
-                             <div>
-                                <label for=""> Relationship </label>
-                                <select id="relationship" name="relationship"  class="shadow-none selectpicker with-border ">
-                                 <option value="0">None</option>
-                                 <option value="1">Single</option>
-                                 <option value="2">In a relationship</option>
-                                 <option value="3">Married</option>
-                                 <option value="4">Engaged</option>
-                               </select>
-                             </div>
-                        </div> 
+                        </form>
      
-                        <div class="bg-gray-10 p-6 pt-0 flex justify-end space-x-3">
-                            <button class="p-2 px-4 rounded bg-gray-50 text-red-500"> Cancel </button>
-                            <button type="button" class="button bg-blue-700"> Save </button>
-                        </div>
+                        
      
                      </div>
     
