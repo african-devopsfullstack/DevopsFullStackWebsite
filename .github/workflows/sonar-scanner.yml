@@ -31,8 +31,7 @@ jobs:
           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
         # Add more parameters as needed, such as source directories
 
-    - name: SonarQube Quality Gate
-      uses: sonarsource/sonarqube-quality-gate-action@v1  # Specify the version you want to use
-      timeout-minutes: 5
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    - name: Check quality gate status
+      run: |
+        sonar-scanner-cli \
+          --status 
