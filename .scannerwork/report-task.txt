@@ -1,0 +1,6 @@
+projectKey=devopsfullstack-website
+serverUrl=http://216.80.104.71:9005
+serverVersion=10.2.0.77647
+dashboardUrl=http://216.80.104.71:9005/dashboard?id=devopsfullstack-website
+ceTaskId=AYqr6Pe1oVEeDCcQ8bFO
+ceTaskUrl=http://216.80.104.71:9005/api/ce/task?id=AYqr6Pe1oVEeDCcQ8bFO

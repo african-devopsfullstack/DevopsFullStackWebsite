@@ -3,8 +3,6 @@
 
 ![Proof HTML](https://github.com/african-devopsfullstack/demo-repository/actions/workflows/proof-html.yml/badge.svg)
 
-[![Quality Gate Status](http://216.80.104.71:9005/api/project_badges/measure?project=devopsfullstack-website&metric=alert_status&token=sqb_d680f1b9293f8cb8127c27dad1d8bb3f66a9dedd)](http://216.80.104.71:9005/dashboard?id=devopsfullstack-website)
-
 This guide will walk you through the process of setting up and running a Flask web application, including creating a .env file for configuring database connections.
 Prerequisites
 
@@ -70,5 +68,3 @@ or
 
     flask run
 
-# Deployment
-Create a new branch from master and create a PR for dev. Once it has been accepted and merge, create another PR to push dev to main. *PLS* Do not push directly to the main branch

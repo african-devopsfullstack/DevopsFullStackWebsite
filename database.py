@@ -32,7 +32,7 @@ def create_table():
                    phone_number VARCHAR(255), linkedin_profile VARCHAR(255), github_profile VARCHAR(255), about VARCHAR(255), \
                    user_location VARCHAR(255), working_at VARCHAR(255), primary key(id))')
     print("Table created successfully")
-    conn.close()
+    
 
 def insert_table(fname, lname, gender, email, password, phone_number):
     query = f"INSERT INTO users(fname, lname, gender, email, password, phone_number) VALUES(%s, %s, %s, %s, %s, %s)"
@@ -40,19 +40,19 @@ def insert_table(fname, lname, gender, email, password, phone_number):
     cursor.execute(query, (fname, lname, gender, email, password, phone_number))
     conn.commit()
     print("Records inserted successfully")
-    conn.close()
+    
 
 def get_user(email):
-    query = f"SELECT * FROM users WHERE email={email}"
+    query = f"SELECT * FROM devopsFullStack_users WHERE email={email}"
     cursor = conn.cursor()
     result = cursor.execute(query)
     for row in result:
         return row
-    conn.close()
+    
 
 def get_all_users(id: int):
     try:
-        query = f"SELECT * FROM users WHERE id not in ({id})"
+        query = f"SELECT * FROM devopsFullStack_users WHERE id not in ({id})"
         cursor = conn.cursor()
         cursor.execute(query)
         result = cursor.fetchall()
@@ -64,18 +64,19 @@ def get_all_users(id: int):
 def get_all_posts():
     try:
         query = f"""SELECT
-        users.fname as first_name,
-        users.lname as last_name,
-        posts.post_content AS post_content,
+        devopsFullStack_posts.post_id AS post_id,
+        devopsFullStack_users.fname as first_name,
+        devopsFullStack_users.lname as last_name,
+        devopsFullStack_posts.post_content AS post_content,
         (
-            SELECT TIMESTAMPDIFF(HOUR, posts.created_at, NOW())
-            FROM posts
-            WHERE posts.user_id = users.id
+            SELECT TIMESTAMPDIFF(HOUR, devopsFullStack_posts.created_at, NOW())
+            FROM devopsFullStack_posts
+            WHERE devopsFullStack_posts.user_id = devopsFullStack_users.id
         ) AS time_elapsed_seconds
     FROM
-        users
+        devopsFullStack_users
     INNER JOIN
-        posts ON users.id = posts.user_id;"""
+        devopsFullStack_posts ON devopsFullStack_users.id = devopsFullStack_posts.user_id;"""
         cursor = conn.cursor()
         cursor.execute(query)
         result = cursor.fetchall()
@@ -83,13 +84,22 @@ def get_all_posts():
         
     except Exception as e:
         print(e)
-        conn.close()
+        
         return None
     # for row in result:
     #     return row
+
+
+def comments(user_id, post_id, comment_text, likes, dislikes, parent_comment_id, created_at):
+    query = f"INSERT INTO devopsfullstack_user_comments(user_id, post_id, comment_text, likes, dislikes, parent_comment_id, created_at) VALUES(%s, %s, %s, %s, %s, %s, %s)"
+    cursor = conn.cursor()
+    cursor.execute(query, (user_id, post_id, comment_text, likes, dislikes, parent_comment_id, created_at))
+    conn.commit()
+    print("Records inserted successfully")
+    
 
 # create_table()
 
 # print(get_all_posts())
 
-# print(get_all_users(0))
+# print(get_all_users(4))
