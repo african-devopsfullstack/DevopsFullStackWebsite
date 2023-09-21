@@ -33,5 +33,5 @@ jobs:
 
     - name: Check quality gate status
       run: |
-        sonar-scanner-cli \
+        sonar-scanner \
           --status 
