@@ -1,5 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import OperationalError
+from flaskext.mysql import MySQL
 from mysql.connector import connect, Error
 from flask_cors import CORS
 from functools import wraps
@@ -17,14 +20,29 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
+mysql = MySQL()
+
 app.config['FLASK_ENV'] = 'development'
 app.config['DEBUG'] = True
 app.config['FLASK_APP'] = 'app.py'
+
+app.config['MYSQL_DATABASE_HOST'] = os.getenv('DB_HOST')
+app.config['MYSQL_DATABASE_PORT'] = 3306
+app.config['MYSQL_DATABASE_USER'] = os.getenv('DB_USER')
+app.config['MYSQL_DATABASE_PASSWORD'] = os.getenv('DB_PASSWORD')
+app.config['MYSQL_DATABASE_DB'] = os.getenv('DB_NAME')
+app.config['MYSQL_DATABASE_CHARSET'] = 'utf8'
+
+
+mysql.init_app(app)
+cursor = mysql.connect().cursor()
+
 socketio = SocketIO(app)
 CORS(app, origins="*")
 
 online_users = set()
 num_of_online_users = len(online_users)
+
 
 try:
     config = {
@@ -35,7 +53,7 @@ try:
 }
 
     conn = connect(**config)
-    cursor = conn.cursor()
+    # cursor = conn.cursor()
     print("Opened database successfully")
 except Error as e:
     print(e)
@@ -43,9 +61,7 @@ except Error as e:
 
 class GenderForm(FlaskForm):
     gender = SelectField('Gender', choices=['Male', 'Female', 'Other'])
-# @app.route('/')
-# def index():
-#     return render_template('index.html')
+
 
 def login_required(f):
     @wraps(f)
@@ -87,21 +103,26 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
-        query = f"SELECT * FROM users WHERE email='{email}'"
-        cursor.execute(query)
-        user = cursor.fetchone()
+        try:
+            with app.app_context():
+                query = f"SELECT * FROM devopsFullStack_users WHERE email='{email}'"
+                cursor.execute(query)
+                user = cursor.fetchone()
 
-        if user and sha256_crypt.verify(password, user[5]):
-            session['user_id'] = user[0]
-            session['logged_in'] = True
-            session['email'] = user[4]
-            session['current_user'] = f"{user[1]} {user[2]}"
-            session['cookie'] = secrets.token_hex(16)
-            user = session['current_user']
-            return redirect(url_for('feed'))
-        else:
-            flash("Invalid credentials")
-            return redirect(url_for('login'))
+                if user and sha256_crypt.verify(password, user[5]):
+                    session['user_id'] = user[0]
+                    session['logged_in'] = True
+                    session['email'] = user[4]
+                    session['current_user'] = f"{user[1]} {user[2]}"
+                    session['cookie'] = secrets.token_hex(16)
+                    user = session['current_user']
+                    return redirect(url_for('feed'))
+                else:
+                    flash("Invalid credentials")
+                    return redirect(url_for('login'))
+        except Error as e:
+            print(e)
+            pass
     return render_template('landing.html', gender_choice=gender_choice, gender_form=gender_form)
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -120,13 +141,13 @@ def register():
 
             print(fname, lname, gender, email, password)
             # database.insert_table(fname, lname, gender, email, sha256_crypt.hash(password), phone_number)
-
-            query = "INSERT into users (fname, lname, gender, email, password, phone_number) VALUES (%s, %s, %s, %s, %s, %s)"
-            
-            cursor.execute(query, (fname, lname, gender, email, sha256_crypt.hash(password), phone_number))
-            conn.commit()
-            print("Records inserted successfully")
-            return redirect(url_for('login'))
+            with app.app_context():
+                query = "INSERT into devopsFullStack_users (fname, lname, gender, email, password, phone_number) VALUES (%s, %s, %s, %s, %s, %s)"
+                
+                cursor.execute(query, (fname, lname, gender, email, sha256_crypt.hash(password), phone_number))
+                conn.commit()
+                print("Records inserted successfully")
+                return redirect(url_for('login'))
         else:
             flash("Invalid credentials")
             return redirect(url_for('register'))
@@ -143,9 +164,10 @@ def post():
         created_at = datetime.datetime.now()
         user_id = session['user_id']
         print(post, created_at, user_id)
-        query = "INSERT into posts (user_id, post_content, created_at) VALUES (%s, %s, %s)" 
-        cursor.execute(query, (user_id, post, created_at))
-        conn.commit()
+        with app.app_context():
+            query = "INSERT into devopsFullStack_posts (user_id, post_content, created_at) VALUES (%s, %s, %s)" 
+            cursor.execute(query, (user_id, post, created_at))
+            conn.commit()
     return redirect(url_for('feed'))
 
 @app.route('/logout')
@@ -237,15 +259,46 @@ def feedlayout2():
 @login_required
 def feed():
     user = session['current_user']
-    posts = database.get_all_posts()
-    
-    # for post in posts:
-    #     print(post)
-    all_users_except_current_user = database.get_all_users(session['user_id'])
-    if all_users_except_current_user is None:
-        all_users_except_current_user = []
+    with app.app_context():
+        posts = database.get_all_posts()
+        all_users_except_current_user = database.get_all_users(session['user_id'])
+    if request.method == 'POST':
+        post_id = request.form['post_id']
+        comments_query = "SELECT * FROM devopsfullstack_user_comments WHERE post_id=%s"
+        cursor.execute(comments_query, (post_id,))
+        comments = cursor.fetchall()
+        print(comments)
+        
+        if all_users_except_current_user is None:
+            all_users_except_current_user = []
+        
+        return render_template('feed.html', user=user, online_users=list(online_users), num_of_online_users=num_of_online_users, posts=posts, 
+                           all_users_except_current_user=all_users_except_current_user, comments=comments)
 
-    return render_template('feed.html', user=user, online_users=list(online_users), num_of_online_users=num_of_online_users, posts=posts, all_users_except_current_user=all_users_except_current_user)
+    return render_template('feed.html', user=user, online_users=list(online_users), num_of_online_users=num_of_online_users, posts=posts)
+
+
+@app.route('/post_comment', methods=['GET', 'POST'])
+@login_required
+def post_comment():
+    if request.method == 'POST':
+        print(request.form)
+        user = session['current_user']
+        user_email = session['email']
+        post_id = request.form['post_id']
+        comment = request.form['comments']
+        created_at = datetime.datetime.now()
+        parent_comment_id = None
+
+        print(user, user_email, post_id, comment, created_at)
+        with app.app_context():
+            try:
+                database.comments(session['user_id'], post_id, comment, 0, 0, parent_comment_id, created_at)
+                return redirect(url_for('feed'))
+            except Exception as e:
+                print(e)
+    return redirect(url_for('feed'))
+
 
 @app.route('/form-login')
 @login_required
@@ -309,25 +362,27 @@ def pagesetting():
     firstname = user.split()[0]
     lastname = user.split()[1]
     email = session['email']
-    query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website  FROM users WHERE email=%s"
-    cursor.execute(query, (email,))
-    result = cursor.fetchone()
-    linkedin_profile = result[0]
-    github_profile = result[1]
-    about_user = result[2]
-    user_location = result[3]
-    working_at = result[4]
-    job_title = result[5]
-    experience = result[6]
-    resume = result[7]
-    website = result[8]
-    print(linkedin_profile, github_profile, about_user, user_location, working_at)
-    return render_template('pages-setting.html', user=user, firstname=firstname, lastname=lastname, 
-                           email=email, online_users=list(online_users), 
-                           num_of_online_users=num_of_online_users,
-                           linkedin_profile=linkedin_profile, github_profile=github_profile,
-                           about_user=about_user, user_location=user_location, working_at=working_at,
-                           job_title=job_title, experience=experience, resume=resume, website=website)
+
+    with app.app_context():
+        query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website  FROM devopsFullStack_users WHERE email=%s"
+        cursor.execute(query, (email,))
+        result = cursor.fetchone()
+        linkedin_profile = result[0]
+        github_profile = result[1]
+        about_user = result[2]
+        user_location = result[3]
+        working_at = result[4]
+        job_title = result[5]
+        experience = result[6]
+        resume = result[7]
+        website = result[8]
+        print(linkedin_profile, github_profile, about_user, user_location, working_at)
+        return render_template('pages-setting.html', user=user, firstname=firstname, lastname=lastname, 
+                            email=email, online_users=list(online_users), 
+                            num_of_online_users=num_of_online_users,
+                            linkedin_profile=linkedin_profile, github_profile=github_profile,
+                            about_user=about_user, user_location=user_location, working_at=working_at,
+                            job_title=job_title, experience=experience, resume=resume, website=website)
 
 @app.route('/save_user_settings', methods=['GET', 'POST'])
 @login_required
@@ -349,16 +404,17 @@ def save_user_settings():
 
         print(fname, lname, email ,linkedin_profile, github_profile, about_user, user_location, working_at)
         try:
-            query = f"""UPDATE users SET fname='{fname}', lname='{lname}', email='{email}',
-            linkedin_profile='{linkedin_profile}', github_profile='{github_profile}', about_user='{about_user}',
-                user_location='{user_location}', working_at='{working_at}', job_title='{job_title}', experience='{experience}',
-                resume_url='{resume}', website='{website}'
-                  WHERE fname='{user.split()[0]}' AND lname='{user.split()[1]}'"""
-            cursor.execute(query)
-            conn.commit()
-            session['current_user'] = f"{fname} {lname}"
-            session['email'] = email
-            return redirect(url_for('pagesetting'))
+            with app.app_context():
+                query = f"""UPDATE devopsFullStack_users SET fname='{fname}', lname='{lname}', email='{email}',
+                linkedin_profile='{linkedin_profile}', github_profile='{github_profile}', about_user='{about_user}',
+                    user_location='{user_location}', working_at='{working_at}', job_title='{job_title}', experience='{experience}',
+                    resume_url='{resume}', website='{website}'
+                    WHERE fname='{user.split()[0]}' AND lname='{user.split()[1]}'"""
+                cursor.execute(query)
+                conn.commit()
+                session['current_user'] = f"{fname} {lname}"
+                session['email'] = email
+                return redirect(url_for('pagesetting'))
         except Error as e:
             print(e)
             pass
@@ -394,24 +450,26 @@ def productsingle():
 def timeline():
     user = session['current_user']
     email = session['email']
-    posts = database.get_all_posts()
-    query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website, about_user FROM users WHERE email=%s"
-    cursor.execute(query, (email,))
-    result = cursor.fetchone()
-    linkedin_profile = result[0]
-    github_profile = result[1]
-    about_user = result[2]
-    user_location = result[3]
-    working_at = result[4]
-    job_title = result[5]
-    experience = result[6]
-    resume = result[7]
-    website = result[8]
-    about_user = result[9]
-    
-    return render_template('timeline.html', user=user, online_users=list(online_users), num_of_online_users=num_of_online_users, posts=posts,
-                           linkedin_profile=linkedin_profile, github_profile=github_profile, user_location=user_location, working_at=working_at,
-                           job_title=job_title, experience=experience, resume=resume, website=website, about_user=about_user)
+
+    with app.app_context():
+        posts = database.get_all_posts()
+        query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website, about_user FROM devopsFullStack_users WHERE email=%s"
+        cursor.execute(query, (email,))
+        result = cursor.fetchone()
+        linkedin_profile = result[0]
+        github_profile = result[1]
+        about_user = result[2]
+        user_location = result[3]
+        working_at = result[4]
+        job_title = result[5]
+        experience = result[6]
+        resume = result[7]
+        website = result[8]
+        about_user = result[9]
+        
+        return render_template('timeline.html', user=user, online_users=list(online_users), num_of_online_users=num_of_online_users, posts=posts,
+                            linkedin_profile=linkedin_profile, github_profile=github_profile, user_location=user_location, working_at=working_at,
+                            job_title=job_title, experience=experience, resume=resume, website=website, about_user=about_user)
 
 @app.route('/timeline-event')
 @login_required
