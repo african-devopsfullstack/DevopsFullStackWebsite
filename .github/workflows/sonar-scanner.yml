@@ -1,4 +1,4 @@
-name: Build
+name: SonarQube Analysis
 
 on:
   push:
@@ -17,8 +17,6 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-          
       # If you wish to fail your job when the Quality Gate is red, uncomment the
       # following lines. This would typically be used to fail a deployment.
       - uses: sonarsource/sonarqube-quality-gate-action@master
