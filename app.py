@@ -26,20 +26,13 @@ CORS(app, origins="*")
 online_users = set()
 num_of_online_users = len(online_users)
 
-try:
-    config = {
+config = {
     'user': os.getenv('DB_USER'),
     'password': os.getenv('DB_PASSWORD'),
     'host': os.getenv('DB_HOST'),
     'database': os.getenv('DB_NAME')
 }
 
-    conn = connect(**config)
-    cursor = conn.cursor()
-    print("Opened database successfully")
-except Error as e:
-    print(e)
-    pass
 
 class GenderForm(FlaskForm):
     gender = SelectField('Gender', choices=['Male', 'Female', 'Other'])
@@ -84,6 +77,8 @@ def login():
     gender_form = GenderForm()
     gender_choice = ['Male', 'Female', 'Other']
     if request.method == 'POST':
+        conn = connect(**config)
+        cursor = conn.cursor()
         email = request.form['email']
         password = request.form['password']
 
@@ -118,9 +113,10 @@ def register():
             password = request.form['password'] 
             phone_number = request.form['phone_number']
 
-            print(fname, lname, gender, email, password)
+            # print(fname, lname, gender, email, password)
             # database.insert_table(fname, lname, gender, email, sha256_crypt.hash(password), phone_number)
-
+            conn = connect(**config)
+            cursor = conn.cursor()
             query = "INSERT into users (fname, lname, gender, email, password, phone_number) VALUES (%s, %s, %s, %s, %s, %s)"
             
             cursor.execute(query, (fname, lname, gender, email, sha256_crypt.hash(password), phone_number))
@@ -142,7 +138,9 @@ def post():
         post = request.form['post']
         created_at = datetime.datetime.now()
         user_id = session['user_id']
-        print(post, created_at, user_id)
+        # print(post, created_at, user_id)
+        conn = connect(**config)
+        cursor = conn.cursor()
         query = "INSERT into posts (user_id, post_content, created_at) VALUES (%s, %s, %s)" 
         cursor.execute(query, (user_id, post, created_at))
         conn.commit()
@@ -237,11 +235,14 @@ def feedlayout2():
 @login_required
 def feed():
     user = session['current_user']
-    posts = database.get_all_posts()
+    user_id = int(session['user_id'])
+
+    conn = connect(**config)
+    posts = database.get_all_posts(conn=conn)
     
     # for post in posts:
     #     print(post)
-    all_users_except_current_user = database.get_all_users(session['user_id'])
+    all_users_except_current_user = database.get_all_users(conn, user_id)
     if all_users_except_current_user is None:
         all_users_except_current_user = []
 
@@ -309,6 +310,9 @@ def pagesetting():
     firstname = user.split()[0]
     lastname = user.split()[1]
     email = session['email']
+
+    conn = connect(**config)
+    cursor = conn.cursor()
     query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website  FROM users WHERE email=%s"
     cursor.execute(query, (email,))
     result = cursor.fetchone()
@@ -321,7 +325,7 @@ def pagesetting():
     experience = result[6]
     resume = result[7]
     website = result[8]
-    print(linkedin_profile, github_profile, about_user, user_location, working_at)
+    # print(linkedin_profile, github_profile, about_user, user_location, working_at)
     return render_template('pages-setting.html', user=user, firstname=firstname, lastname=lastname, 
                            email=email, online_users=list(online_users), 
                            num_of_online_users=num_of_online_users,
@@ -347,8 +351,10 @@ def save_user_settings():
         resume = request.form['resume']
         website = request.form['website']
 
-        print(fname, lname, email ,linkedin_profile, github_profile, about_user, user_location, working_at)
+        # print(fname, lname, email ,linkedin_profile, github_profile, about_user, user_location, working_at)
         try:
+            conn = connect(**config)
+            cursor = conn.cursor()
             query = f"""UPDATE users SET fname='{fname}', lname='{lname}', email='{email}',
             linkedin_profile='{linkedin_profile}', github_profile='{github_profile}', about_user='{about_user}',
                 user_location='{user_location}', working_at='{working_at}', job_title='{job_title}', experience='{experience}',
@@ -394,7 +400,9 @@ def productsingle():
 def timeline():
     user = session['current_user']
     email = session['email']
-    posts = database.get_all_posts()
+    conn = connect(**config)
+    cursor = conn.cursor()
+    posts = database.get_all_posts(conn=conn)
     query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website, about_user FROM users WHERE email=%s"
     cursor.execute(query, (email,))
     result = cursor.fetchone()

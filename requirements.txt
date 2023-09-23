@@ -8,3 +8,5 @@ mysql-connector-python
 requests
 httpx
 flask-socketio
+flask_sqlalchemy
+sqlalchemy
