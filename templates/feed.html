@@ -807,6 +807,7 @@
                             </div> 
                         </div>
                         {% for post in posts %}
+                        <!-- <p>{{post}}</p> -->
                         <div class="card lg:mx-0 uk-animation-slide-bottom-small">
                             <form action="{{ url_for('post_comment') }}" method="post">
                                 <!-- post header-->
@@ -818,7 +819,8 @@
                                         </a>
                                         <div class="flex-1 font-semibold capitalize">
                                             <a href="#" class="text-black dark:text-gray-100"> {{ post[1] }} {{ post[2] }}</a>
-                                            <div class="text-gray-700 flex items-center space-x-2" id> {{ post[4] }} <span> hrs </span> <ion-icon name="people"></ion-icon></div>
+                                            <div class="text-gray-700 flex items-center space-x-2" > {{ post[5].split()[0]}} <ion-icon name="calendar"></ion-icon></div>
+                                            <div class="text-gray-700 flex items-center space-x-2"><ion-icon name="time"></ion-icon> Posted: {{ post[5].split()[1]}} </div>
                                         </div>
                                     </div>
                                     <div>
@@ -862,7 +864,7 @@
                                 </div>
                     
                                 <div uk-lightbox>
-                                    <input type="hidden" value="{{ post[0] }}" name="post_id">
+                                    <input type="hidden" value="{{ post[0] }}" name="post_id" id="post_id">
                                     <h1 class="text-2xl font-semibold mb-2" style="padding-left: 15px;"> {{ post[3] }} </h1>
                                     <!-- <a href="{{ url_for('static', filename='assets/images/avatars/avatar-lg-3.jpg') }}">  
                                         <img src="{{ url_for('static', filename='assets/images/avatars/avatar-lg-4.jpg') }}" alt="" class="max-h-96 w-full object-cover">
@@ -908,7 +910,8 @@
                                             Liked <strong> Johnson</strong> and <strong> 209 Others </strong>
                                         </div>
                                     </div> -->
-                    
+                                    
+                                    {% for comment in comments %}
                                     <div class="border-t py-4 space-y-4 dark:border-gray-600">
                                         <div class="flex">
                                             <div class="w-10 h-10 rounded-full relative flex-shrink-0">
@@ -933,7 +936,7 @@
                                             </div>
                                             <div>
                                                 <div class="text-gray-700 py-2 px-3 rounded-md bg-gray-100 relative lg:ml-5 ml-2 lg:mr-12  dark:bg-gray-800 dark:text-gray-100">
-                                                    <p class="leading-6"> <i class="uil-grin-tongue-wink-alt"></i> </p>
+                                                    <p class="leading-6"> {{comment }}</p>
                                                     <div class="absolute w-3 h-3 top-3 -left-1 bg-gray-100 transform rotate-45 dark:bg-gray-800"></div>
                                                 </div>
                                                 <div class="text-xs flex items-center space-x-3 mt-2 ml-5">
@@ -945,6 +948,7 @@
                                         </div>
                                         
                                     </div>
+                                    {% endfor %}
                                     
                                     <!-- <a href="#" class="hover:text-blue-600 hover:underline">  Veiw 8 more Comments </a> -->
                     
@@ -1003,7 +1007,7 @@
                                             <img src="{{ url_for('static', filename='assets/images/avatars/avatar-1.jpg') }}" alt="">
                                             <!-- <span class="user_status status_online"></span> -->
                                         </div>
-                                        <div class="contact-username"> {{ users[1]}} {{ users[2] }}</div>
+                                        <div class="contact-username">{{ users[1]}} {{ users[2] }}</div>
                                     </a>
                                     <div uk-drop="pos: left-center ;animation: uk-animation-slide-left-small">
                                         <div class="contact-list-box">
@@ -1011,7 +1015,7 @@
                                                 <img src="{{ url_for('static', filename='assets/images/avatars/avatar-2.jpg') }}" alt="">
                                                 <span class="user_status status_online"></span>
                                             </div>
-                                            <div class="contact-username">   {{ users[1]}} {{ users[2] }}</div>
+                                            <div class="contact-username"> <a href="{{ url_for('timeline')}}" target="_blank" style="text-align: center;padding-left: 51px;"> {{ users[1]}} {{ users[2] }} </div></a> 
                                             <ul class="text-gray-600 space-y-3 mt-3">
                                                 <li class="flex items-center space-x-2"> 
                                                     <ion-icon name="home-sharp" class="rounded-full bg-gray-200 text-xl p-1 mr-3"></ion-icon>

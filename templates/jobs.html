@@ -499,8 +499,8 @@
                                         <img src="{{ url_for('static', filename='assets/images/avatars/avatar-2.jpg') }}" alt="">
                                     </div>
                                     <div class="user_name">
-                                        <div> Stella Johnson </div>
-                                        <span> @johnson</span>
+                                        <div> {{ user }} </div>
+                                        <!-- <span> @johnson</span> -->
                                     </div>
                                 </a>
                                 <hr>
@@ -651,32 +651,15 @@
 
                 <div class="contact-list my-2 ml-1">
                     
+                    {% for users in all_users_except_current_user %}
                     <a href="{{ url_for('chatsfriend') }}">
                         <div class="contact-avatar">
                             <img src="{{ url_for('static', filename='assets/images/avatars/avatar-1.jpg') }}" alt="">
                             <span class="user_status status_online"></span>
                         </div>
-                        <div class="contact-username"> Dennis Han</div>
+                        <div class="contact-username"> {{ users[1]}} {{ users[2] }}</div>
                     </a>
-                    <a href="{{ url_for('chatsfriend') }}">
-                        <div class="contact-avatar">
-                            <img src="{{ url_for('static', filename='assets/images/avatars/avatar-2.jpg') }}" alt="">
-                            <span class="user_status"></span>
-                        </div>
-                        <div class="contact-username"> Erica Jones</div>
-                    </a>
-                    <a href="{{ url_for('chatsfriend') }}">
-                        <div class="contact-avatar">
-                            <img src="{{ url_for('static', filename='assets/images/avatars/avatar-7.jpg') }}" alt="">
-                        </div>
-                        <div class="contact-username">Stella Johnson</div>
-                    </a>
-                    <a href="{{ url_for('chatsfriend') }}">
-                        <div class="contact-avatar">
-                            <img src="{{ url_for('static', filename='assets/images/avatars/avatar-4.jpg') }}" alt="">
-                        </div>
-                        <div class="contact-username"> Alex Dolgove</div>
-                    </a>
+                    {% endfor %}
     
                 </div>
     

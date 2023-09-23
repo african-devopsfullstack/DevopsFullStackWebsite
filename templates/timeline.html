@@ -860,7 +860,7 @@
                            <div class="card lg:mx-0 p-4" uk-toggle="target: #create-post-modal">
                                <div class="flex space-x-3">
                                    <img src="{{ url_for('static',filename='assets/images/avatars/avatar-2.jpg') }}" class="w-10 h-10 rounded-full">
-                                   <input placeholder="What's Your Mind ? Hamse!" class="bg-gray-100 hover:bg-gray-200 flex-1 h-10 px-6 rounded-full"> 
+                                   <input placeholder="What's Your Mind ? {{ user.split()[0]}}" class="bg-gray-100 hover:bg-gray-200 flex-1 h-10 px-6 rounded-full"> 
                                </div>
                                <div class="grid grid-flow-col pt-3 -mx-1 -mb-1 font-semibold text-sm">
                                     <div class="hover:bg-gray-100 flex items-center p-1.5 rounded-md cursor-pointer"> 
@@ -888,8 +888,9 @@
                                            <img src="{{ url_for('static', filename='assets/images/avatars/avatar-2.jpg') }}" class="bg-gray-200 border border-white rounded-full w-10 h-10">
                                        </a>
                                        <div class="flex-1 font-semibold capitalize">
-                                           <a href="#" class="text-black dark:text-gray-100"> {{ post[0] }} {{ post[1] }}</a>
-                                           <div class="text-gray-700 flex items-center space-x-2"> {{ post[3] }} <span> hrs </span> <ion-icon name="people"></ion-icon></div>
+                                            <a href="#" class="text-black dark:text-gray-100"> {{ post[1] }} {{ post[2] }}</a>
+                                            <div class="text-gray-700 flex items-center space-x-2" > {{ post[5].split()[0]}} <ion-icon name="calendar"></ion-icon></div>
+                                            <div class="text-gray-700 flex items-center space-x-2"><ion-icon name="time"></ion-icon> Posted: {{ post[5].split()[1]}} </div>
                                        </div>
                                    </div>
                                    <div>
@@ -933,7 +934,7 @@
                                </div>
                    
                                <div uk-lightbox>
-                                   <h1 class="text-2xl font-semibold mb-2" style="padding-left: 15px;"> {{ post[2] }} </h1>
+                                   <h1 class="text-2xl font-semibold mb-2" style="padding-left: 15px;"> {{ post[3] }} </h1>
                                    <!-- <a href="{{ url_for('static', filename='assets/images/avatars/avatar-lg-3.jpg') }}">  
                                        <img src="{{ url_for('static', filename='assets/images/avatars/avatar-lg-4.jpg') }}" alt="" class="max-h-96 w-full object-cover">
                                    </a> -->

@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import OperationalError
+import sqlite3
 from flaskext.mysql import MySQL
 from mysql.connector import connect, Error
 from flask_cors import CORS
@@ -26,16 +27,16 @@ app.config['FLASK_ENV'] = 'development'
 app.config['DEBUG'] = True
 app.config['FLASK_APP'] = 'app.py'
 
-app.config['MYSQL_DATABASE_HOST'] = os.getenv('DB_HOST')
-app.config['MYSQL_DATABASE_PORT'] = 3306
-app.config['MYSQL_DATABASE_USER'] = os.getenv('DB_USER')
-app.config['MYSQL_DATABASE_PASSWORD'] = os.getenv('DB_PASSWORD')
-app.config['MYSQL_DATABASE_DB'] = os.getenv('DB_NAME')
-app.config['MYSQL_DATABASE_CHARSET'] = 'utf8'
+# app.config['MYSQL_DATABASE_HOST'] = os.getenv('DB_HOST')
+# app.config['MYSQL_DATABASE_PORT'] = 3306
+# app.config['MYSQL_DATABASE_USER'] = os.getenv('DB_USER')
+# app.config['MYSQL_DATABASE_PASSWORD'] = os.getenv('DB_PASSWORD')
+# app.config['MYSQL_DATABASE_DB'] = os.getenv('DB_NAME')
+# app.config['MYSQL_DATABASE_CHARSET'] = 'utf8'
 
 
-mysql.init_app(app)
-cursor = mysql.connect().cursor()
+# mysql.init_app(app)
+# cursor = mysql.connect().cursor()
 
 socketio = SocketIO(app)
 CORS(app, origins="*")
@@ -43,21 +44,23 @@ CORS(app, origins="*")
 online_users = set()
 num_of_online_users = len(online_users)
 
+conn = sqlite3.connect('database.db', check_same_thread=False)
+cursor = conn.cursor()
 
-try:
-    config = {
-    'user': os.getenv('DB_USER'),
-    'password': os.getenv('DB_PASSWORD'),
-    'host': os.getenv('DB_HOST'),
-    'database': os.getenv('DB_NAME')
-}
+# try:
+#     config = {
+#     'user': os.getenv('DB_USER'),
+#     'password': os.getenv('DB_PASSWORD'),
+#     'host': os.getenv('DB_HOST'),
+#     'database': os.getenv('DB_NAME')
+# }
 
-    conn = connect(**config)
-    # cursor = conn.cursor()
-    print("Opened database successfully")
-except Error as e:
-    print(e)
-    pass
+#     conn = connect(**config)
+#     # cursor = conn.cursor()
+#     print("Opened database successfully")
+# except Error as e:
+#     print(e)
+#     pass
 
 class GenderForm(FlaskForm):
     gender = SelectField('Gender', choices=['Male', 'Female', 'Other'])
@@ -141,7 +144,7 @@ def register():
             print(fname, lname, gender, email, password)
             # database.insert_table(fname, lname, gender, email, sha256_crypt.hash(password), phone_number)
             with app.app_context():
-                query = "INSERT into users (fname, lname, gender, email, password, phone_number) VALUES (%s, %s, %s, %s, %s, %s)"
+                query = "INSERT into users (fname, lname, gender, email, password, phone_number) VALUES (?, ?, ?, ?, ?, ?)"
                 
                 cursor.execute(query, (fname, lname, gender, email, sha256_crypt.hash(password), phone_number))
                 conn.commit()
@@ -164,7 +167,7 @@ def post():
         user_id = session['user_id']
         print(post, created_at, user_id)
         with app.app_context():
-            query = "INSERT into posts (user_id, post_content, created_at) VALUES (%s, %s, %s)" 
+            query = "INSERT into posts (user_id, post_content, created_at) VALUES (?, ?, ?)" 
             cursor.execute(query, (user_id, post, created_at))
             conn.commit()
     return redirect(url_for('feed'))
@@ -257,26 +260,33 @@ def feedlayout2():
 @app.route('/feed', methods=['GET', 'POST'])
 @login_required
 def feed():
+    # user = None  # Initialize user to None or a default value
     user = session['current_user']
-    with app.app_context():
-        posts = database.get_all_posts(conn=conn)
-        all_users_except_current_user = database.get_all_users(conn, session['user_id'])
-        print(all_users_except_current_user)
     if request.method == 'POST':
-        post_id = request.form['post_id']
-        print(post_id)
-        comments_query = "SELECT * FROM user_comments WHERE post_id=%s"
-        cursor.execute(comments_query, (post_id,))
+        post_id = request.form.get('post_id')
+        posts = database.get_all_posts(conn=conn)
+
+        comments_query = f"SELECT * FROM user_comments WHERE post_id={post_id}"
+        cursor.execute(comments_query)
         comments = cursor.fetchall()
         print(comments)
-        
-        if all_users_except_current_user is None:
-            all_users_except_current_user = []
-        
-        return render_template('feed.html', user=user, online_users=list(online_users), num_of_online_users=num_of_online_users, posts=posts, 
+        all_users_except_current_user = database.get_all_users(conn, session['user_id'])
+
+    else:
+        # Handle GET request or other methods if needed
+        post_id = request.form.get('post_id')
+        # print(post_id)
+        posts = database.get_all_posts(conn=conn)
+        all_users_except_current_user = database.get_all_users(conn, session['user_id'])
+        # comments_query = f"SELECT * FROM user_comments WHERE post_id={post_id}"
+        # cursor.execute(comments_query)
+        # comments = cursor.fetchall()
+        # print(comments)
+        comments = []
+
+    return render_template('feed.html', user=user, online_users=list(online_users), num_of_online_users=num_of_online_users, posts=posts, 
                            all_users_except_current_user=all_users_except_current_user, comments=comments)
 
-    return render_template('feed.html', user=user, online_users=list(online_users), num_of_online_users=num_of_online_users, posts=posts)
 
 
 @app.route('/post_comment', methods=['GET', 'POST'])
@@ -334,7 +344,9 @@ def groups():
 @app.route('/jobs', methods=['GET', 'POST'])
 @login_required
 def jobs():
-    return render_template('jobs.html')
+    user = session['current_user']
+    all_users_except_current_user = database.get_all_users(conn, session['user_id'])
+    return render_template('jobs.html', user=user, online_users=list(online_users), num_of_online_users=num_of_online_users, all_users_except_current_user=all_users_except_current_user)
 
 @app.route('/job-details')
 @login_required
@@ -365,7 +377,7 @@ def pagesetting():
     email = session['email']
 
     with app.app_context():
-        query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website  FROM users WHERE email=%s"
+        query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website  FROM users WHERE email=?"
         cursor.execute(query, (email,))
         result = cursor.fetchone()
         linkedin_profile = result[0]
@@ -454,7 +466,7 @@ def timeline():
 
     with app.app_context():
         posts = database.get_all_posts(conn=conn)
-        query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website, about_user FROM users WHERE email=%s"
+        query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website, about_user FROM users WHERE email=?"
         cursor.execute(query, (email,))
         result = cursor.fetchone()
         linkedin_profile = result[0]
