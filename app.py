@@ -87,10 +87,9 @@ def landing():
         gender = request.form['gender']
         email = request.form['email']
         password = request.form['password']
-
-        print(fname, lname, gender, email, password)
         if selected_option == 'Male' or selected_option == 'Female' or selected_option == 'Other':
-            print(fname, lname, gender, email, password)
+
+            return redirect(url_for('register'))
         return render_template('landing.html', gender_choice=gender_choice, selected_option=selected_option, gender_form=gender_form)
     return render_template('landing.html', gender_choice=gender_choice, selected_option=selected_option, gender_form=gender_form)
 
@@ -105,7 +104,7 @@ def login():
 
         try:
             with app.app_context():
-                query = f"SELECT * FROM devopsFullStack_users WHERE email='{email}'"
+                query = f"SELECT * FROM users WHERE email='{email}'"
                 cursor.execute(query)
                 user = cursor.fetchone()
 
@@ -142,7 +141,7 @@ def register():
             print(fname, lname, gender, email, password)
             # database.insert_table(fname, lname, gender, email, sha256_crypt.hash(password), phone_number)
             with app.app_context():
-                query = "INSERT into devopsFullStack_users (fname, lname, gender, email, password, phone_number) VALUES (%s, %s, %s, %s, %s, %s)"
+                query = "INSERT into users (fname, lname, gender, email, password, phone_number) VALUES (%s, %s, %s, %s, %s, %s)"
                 
                 cursor.execute(query, (fname, lname, gender, email, sha256_crypt.hash(password), phone_number))
                 conn.commit()
@@ -165,7 +164,7 @@ def post():
         user_id = session['user_id']
         print(post, created_at, user_id)
         with app.app_context():
-            query = "INSERT into devopsFullStack_posts (user_id, post_content, created_at) VALUES (%s, %s, %s)" 
+            query = "INSERT into posts (user_id, post_content, created_at) VALUES (%s, %s, %s)" 
             cursor.execute(query, (user_id, post, created_at))
             conn.commit()
     return redirect(url_for('feed'))
@@ -260,11 +259,13 @@ def feedlayout2():
 def feed():
     user = session['current_user']
     with app.app_context():
-        posts = database.get_all_posts()
-        all_users_except_current_user = database.get_all_users(session['user_id'])
+        posts = database.get_all_posts(conn=conn)
+        all_users_except_current_user = database.get_all_users(conn, session['user_id'])
+        print(all_users_except_current_user)
     if request.method == 'POST':
         post_id = request.form['post_id']
-        comments_query = "SELECT * FROM devopsfullstack_user_comments WHERE post_id=%s"
+        print(post_id)
+        comments_query = "SELECT * FROM user_comments WHERE post_id=%s"
         cursor.execute(comments_query, (post_id,))
         comments = cursor.fetchall()
         print(comments)
@@ -290,10 +291,10 @@ def post_comment():
         created_at = datetime.datetime.now()
         parent_comment_id = None
 
-        print(user, user_email, post_id, comment, created_at)
+        # print(user, user_email, post_id, comment, created_at)
         with app.app_context():
             try:
-                database.comments(session['user_id'], post_id, comment, 0, 0, parent_comment_id, created_at)
+                database.comments(conn, session['user_id'], post_id, comment, 0, 0, parent_comment_id, created_at)
                 return redirect(url_for('feed'))
             except Exception as e:
                 print(e)
@@ -364,7 +365,7 @@ def pagesetting():
     email = session['email']
 
     with app.app_context():
-        query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website  FROM devopsFullStack_users WHERE email=%s"
+        query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website  FROM users WHERE email=%s"
         cursor.execute(query, (email,))
         result = cursor.fetchone()
         linkedin_profile = result[0]
@@ -405,7 +406,7 @@ def save_user_settings():
         print(fname, lname, email ,linkedin_profile, github_profile, about_user, user_location, working_at)
         try:
             with app.app_context():
-                query = f"""UPDATE devopsFullStack_users SET fname='{fname}', lname='{lname}', email='{email}',
+                query = f"""UPDATE users SET fname='{fname}', lname='{lname}', email='{email}',
                 linkedin_profile='{linkedin_profile}', github_profile='{github_profile}', about_user='{about_user}',
                     user_location='{user_location}', working_at='{working_at}', job_title='{job_title}', experience='{experience}',
                     resume_url='{resume}', website='{website}'
@@ -452,8 +453,8 @@ def timeline():
     email = session['email']
 
     with app.app_context():
-        posts = database.get_all_posts()
-        query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website, about_user FROM devopsFullStack_users WHERE email=%s"
+        posts = database.get_all_posts(conn=conn)
+        query = "SELECT linkedin_profile, github_profile, about_user, user_location, working_at, job_title, experience, resume_url, website, about_user FROM users WHERE email=%s"
         cursor.execute(query, (email,))
         result = cursor.fetchone()
         linkedin_profile = result[0]

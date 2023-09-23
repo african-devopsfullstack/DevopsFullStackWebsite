@@ -806,11 +806,11 @@
                                 </div>
                             </div> 
                         </div>
-                        
+                        {% for post in posts %}
                         <div class="card lg:mx-0 uk-animation-slide-bottom-small">
                             <form action="{{ url_for('post_comment') }}" method="post">
                                 <!-- post header-->
-                                {% for post in posts %}
+                                
                                 <div class="flex justify-between items-center lg:p-4 p-2.5">
                                     <div class="flex flex-1 items-center space-x-4">
                                         <a href="#">
@@ -966,7 +966,7 @@
                                 </div>
                     
                             </div>
-                            {% endfor %}
+                        {% endfor %}
                         </form>
 
                 

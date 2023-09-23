@@ -3,6 +3,8 @@
 
 ![Proof HTML](https://github.com/african-devopsfullstack/demo-repository/actions/workflows/proof-html.yml/badge.svg)
 
+[![Quality Gate Status](http://216.80.104.71:9005/api/project_badges/measure?project=devopsfullstack-site&metric=alert_status&token=sqb_849d5cff9b2b1b822bc8a260c6a3849b31a7f532)](http://216.80.104.71:9005/dashboard?id=devopsfullstack-site)
+
 This guide will walk you through the process of setting up and running a Flask web application, including creating a .env file for configuring database connections.
 Prerequisites
 
