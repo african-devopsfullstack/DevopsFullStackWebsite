@@ -7,7 +7,7 @@ resource "kubernetes_deployment" "this" {
     }
   }
   spec {
-    replicas = 2
+    # replicas = 1
     selector {
       match_labels = {
         app = "${var.container_name}-deployment"
