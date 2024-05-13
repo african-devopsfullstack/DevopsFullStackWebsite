@@ -29,7 +29,7 @@ pipeline {
         stage('Quality Gate') {
             steps {
                 withSonarQubeEnv('sonar-server') {
-                    waithForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
                 }
             }
         }
