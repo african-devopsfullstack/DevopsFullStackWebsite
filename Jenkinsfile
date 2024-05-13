@@ -85,6 +85,8 @@ pipeline {
                     if (isRunning == 0) {
                         sh "docker stop ${containerName}"
                         sh "docker rm ${containerName}"
+                        echo "Stopped and Removed existing container"
+                        echo "Deploying new container"
                         dir("terraform") {
                             sh "terraform init"
                             sh "terraform apply -auto-approve -var 'image_name=${IMAGE_NAME}' -var 'image_tag=${IMAGE_TAG}' -var 'container_name=${containerName}' -var external_port=8765"
