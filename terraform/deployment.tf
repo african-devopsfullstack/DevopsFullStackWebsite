@@ -38,7 +38,7 @@ resource "kubernetes_deployment" "this" {
             container_port = 5000
           }
         }
-        restart_policy = "unless-stopped"
+        restart_policy = "Always"
       }
 
     }
