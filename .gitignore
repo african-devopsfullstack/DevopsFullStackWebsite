@@ -1,3 +1,8 @@
 .env
 venv
 __pycache__
+/jenkins_job/terraform.auto.tfvars
+/jenkins_job/terraform.tfstate
+/jenkins_job/terraform.tfstate.backup
+/jenkins_job/.terraform
+/jenkins_job/.terraform.lock.hcl

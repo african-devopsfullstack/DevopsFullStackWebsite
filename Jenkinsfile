@@ -16,6 +16,88 @@ pipeline {
         }
         stage('Checkout') {
             steps {
-                git branch 
+                git branch: 'main', url: 'https://github.com/african-devopsfullstack/DevopsFullStackWebsite.git'
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh "${SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=devopsfullstack-site -Dsonar.projectName=devopsfullstack-site"
+                }
+            }
+        }
+        stage('Quality Gate') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    waithForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+                }
+            }
+        }
+        stage('Owasp Dependency Check') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit --nvdApiKey 4bdf4acc-8eae-45c1-bfc4-844d549be812', odcInstallation: 'DP-Check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+        stage('Trivy FS Scan') {
+            steps {
+                script {
+                    sh "trivy fs . --exit-code 0"
+                }
+            }
+        }
+        stage('Login to DockerHub') {
+            steps {
+                script {
+                    sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
+                    echo "Logged in to DockerHub"
+                }
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                script {
+                    sh "docker build -t $IMAGE_NAME:$IMAGE_TAG ."
+                    echo "Docker Build Completed"
+                }
+            }
+        }
+        stage('Trivy Docker Scan') {
+            steps {
+                script {
+                    sh "trivy image $IMAGE_NAME:$IMAGE_TAG --exit-code 0"
+                }
+            }
+        }
+        stage('Docker Push') {
+            steps {
+                script {
+                    sh "docker push $IMAGE_NAME:$IMAGE_TAG"
+                    echo "Docker Push Completed"
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                script {
+                    def containerName = "devopsfullstack-site"
+                    def isRunning = sh(script: "docker ps -a | grep ${containerName}", returnStatus: true)
+                    if (isRunning == 0) {
+                        sh "docker stop ${containerName}"
+                        sh "docker rm ${containerName}"
+                        dir("terraform") {
+                            sh "terraform init"
+                            sh "terraform apply -auto-approve -var 'image_name=${IMAGE_NAME}' -var 'image_tag=${IMAGE_TAG}' -var 'container_name=${containerName}' -var external_port=8765"
+                        }
+                    }
+                    else {
+                        dir("terraform") {
+                            sh "terraform init"
+                            sh "terraform apply -auto-approve -var 'image_name=${IMAGE_NAME}' -var 'image_tag=${IMAGE_TAG}' -var 'container_name=${containerName}' -var external_port=8765"
+                        }
+                    }
+                }
+            }
+        }
     }
 }
