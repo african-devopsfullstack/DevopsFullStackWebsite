@@ -89,13 +89,13 @@ pipeline {
                         echo "Deploying new container"
                         dir("terraform") {
                             sh "terraform init"
-                            sh "terraform apply -auto-approve -var 'image_name=${IMAGE_NAME}' -var 'image_tag=${IMAGE_TAG}' -var 'container_name=${containerName}' -var external_port=8765"
+                            sh "terraform apply -auto-approve -var 'image_name=${IMAGE_NAME}' -var 'image_tag=${IMAGE_TAG}' -var 'container_name=${containerName}' -var external_port=8769"
                         }
                     }
                     else {
                         dir("terraform") {
                             sh "terraform init"
-                            sh "terraform apply -auto-approve -var 'image_name=${IMAGE_NAME}' -var 'image_tag=${IMAGE_TAG}' -var 'container_name=${containerName}' -var external_port=8765"
+                            sh "terraform apply -auto-approve -var 'image_name=${IMAGE_NAME}' -var 'image_tag=${IMAGE_TAG}' -var 'container_name=${containerName}' -var external_port=8769"
                         }
                     }
                 }
