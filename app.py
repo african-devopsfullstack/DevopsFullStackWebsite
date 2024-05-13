@@ -3,7 +3,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import OperationalError
 import sqlite3
-from flaskext.mysql import MySQL
+# from flaskext.mysql import MySQL
 from mysql.connector import connect, Error
 from flask_cors import CORS
 from functools import wraps
@@ -21,7 +21,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
-mysql = MySQL()
+# mysql = MySQL()
 
 app.config['FLASK_ENV'] = 'development'
 app.config['DEBUG'] = True
